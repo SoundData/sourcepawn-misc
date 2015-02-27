@@ -13,10 +13,23 @@ public Plugin:myinfo =
   url = "https://github.com/orgs/SoundData/"
 };
 
+public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
+{
+	// Tell SourcePawn to map the native function "ConstructMessage" (defined in sounddata_send.inc)
+	// to the function Native_ConstructMessage, as implemented below
+   CreateNative("ConstructMessage", Native_ConstructMessage);
+   
+   // Return success to allow other plugins to load
+   return APLRes_Success;
+}
+
+
 public OnPluginStart()
 {
 	HookEvent("weapon_fire", Event_WeaponFire, EventHookMode_Pre);
+	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
 	PrintToServer("Successfully loaded Broadcast Plugin");
+	
 }
 
 
@@ -52,8 +65,74 @@ public Action:Event_WeaponFire(Handle:event, const String:name[], bool:dontBroad
 	// Form the string we will send over the network
 	decl String:buffer[512];
 	Format(buffer, 512, "WEAPON_FIRE##PlayerName##%s##WeaponName##%s", cName, weapName);
-	PrintToServer("[SM] %s fired a %s || sending [%s] to clients", cName, weapName, buffer);
+	PrintToServer("[SM] %s fired a %s || sending [%s] to client", cName, weapName, buffer);
 	
 	// Send
 	SounddataSend(buffer);
+}
+
+public Action:Event_PlayerDeath()
+{
+	// decl String:buffer[512]; // this is just a 512-char buffer like the same type used in C strings
+	// decl String:attackerName[64];
+	// decl String:
+	// GetAttackerName(attackerName, 64);
+	// Format(buffer, 512, "PLAYER_DEATH##Attacker##%s##Victim##%s##Assister##%s##KillStreakTotal##%d##RocketJump##%d", attackerName, vicName, assisterName, ksTotal, rocketJump);
+	
+	decl String:command[4096]; //4096 bytes = 4kb
+	ConstructMessage(command, 4096, "PLAYER_DEATH", AttackerName, VictimName, AssisterName, KillStreamTotal, IsRocketJumping);
+	SounddataSend(command);
+	
+	//FormEventString(command, "PLAYER_DEATH", "Attacker", "Victim", "Assister", "KillStreakTotal", "RocketJump");
+}
+
+Native_ConstructMessage(Handle:plugin, numParams)
+{
+	for (new i = 3; i < numParams; i++)
+	{
+		// Note: probably doing it this way will be too slow.
+		// We know that we have (numParams - 4) arguments here, which will all be string or int variables
+		// Maybe we should have an array of pointers (references in SourcePawn) to cells, which store the 
+		// locations of the relevant parameters, so that we can wrap them all up in a single Format(...)
+		// call after filling in all the relevant information.
+		switch (GetNativeCell(i))
+		{
+		
+		case AttackerName:
+			decl String:attackerName[64];
+			new userId = GetEventInt(event, "attacker");
+			new clientId = GetClientOfUserId(userId);
+			GetClientName(attackerName, cName, sizeof(cName));
+			Format(command, "%s##Attacker##%s", command, attackerName);
+			break;
+		case VictimName:
+			decl String:vicName[64];
+			new userId = GetEventInt(event, "userid");
+			new clientId = GetClientOfUserId(userId);
+			GetClientName(attackerName, cName, sizeof(cName));
+			Format(command, "%s##Victim##%s", command, attackerName);
+			break;
+		case AssisterName: //...etc
+			
+			break;
+	}
+		
+}
+
+
+// TODO: Fit these into the switch-case statement inside the native function above?
+// Or just use separately?
+GetClientName(String:buffer[], bufferSize)
+{
+	
+}
+
+GetWeaponName(String:buffer[], bufferSize)
+{
+
+}
+
+GetDeadPlayerName(String:buffer[], bufferSize)
+{
+
 }
