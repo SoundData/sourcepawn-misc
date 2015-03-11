@@ -26,25 +26,8 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 
 public OnPluginStart()
 {
-	// Global Events for all classes
 	HookEvent("weapon_fire", Event_WeaponFire, EventHookMode_Pre);
 	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
-	HookEvent("kill_streak_total", Event_KillStreakTotal, EventHookMode_Pre);
-	
-	HookEvent("object_destroyed", Event_ObjectDestroyed, EventHookMode_Pre);
-	HookEvent("ctf_flag_captured", Event_ctfFlagCaptured, EventHookMode_Pre);
-	
-	HookEvent("player_teleported", Event_PlayerTeleported, EventHookMode_Pre);
-	HookEvent("player_ignited", Event_PlayerIgnited, EventHookMode_Pre);
-
-	//Class Specific Events
-	HookEvent("sticky_jump", Event_StickyJump, EventHookMode_Pre); //Demoman
-	HookEvent("rocketJump", Event_RocketJump, EventHookMode_Pre); // Soldier
-	HookEvent("player_extinguished", Event_PlayerExtinguished, EventHookMode_Pre); // Medic
-	HookEvent("air_dash", Event_AirDash, EventHookMode_Pre); // Scout Double Jumps
-	HookEvent("arrow_impact", Event_ArrowImpact, EventHookMode_Pre); // Sniper Arrow or Medic's Crossbow
-	HookEvent("spy_pda_reset", Event_SpyPDAReset, EventHookMode_Pre); // Spy
-
 	PrintToServer("Successfully loaded Broadcast Plugin");
 	
 }
@@ -71,8 +54,7 @@ public Action:Event_WeaponFire(Handle:event, const String:name[], bool:dontBroad
 	// When a weapon is fired, get the username and weapon type
 	decl String:cName[64];
 	decl String:weapName[64];
-	// Need to get userID from event, then get the client number from userID,
-	// then finally get the client name from the client number
+	// Need to get userID from event, then get the client number from userID, then finally get the client name from the client number
 	new userId = GetEventInt(event, "userid");
 	new clientId = GetClientOfUserId(userId);
 	GetClientName(clientId, cName, sizeof(cName));
@@ -102,69 +84,6 @@ public Action:Event_PlayerDeath()
 	SounddataSend(command);
 	
 	//FormEventString(command, "PLAYER_DEATH", "Attacker", "Victim", "Assister", "KillStreakTotal", "RocketJump");
-}
-
-public Action:Event_KillStreakTotal(Handle:event, const String:name[], bool:dontBroadcast)
-{
-	// Get username and weapon type
-	decl String:cName[64];
-	decl String:weapName[64];
-
-	// Need to get userID from event, then get the client number from userID,
-	// then finally get the client name from the client number
-	new userId = GetEventInt(event, "userid");
-	new clientId = GetClientOfUserId(userId);
-	GetClientName(clientId, cName, sizeof(cName));	
-
-	// Get weapon name from event
-	GetEventString(event, "weapon", weapName, sizeof(weapName));
-
-	// Get killstreak count from event
-	GetEventString(event, "kill_streak_total", kstotal, sizeof(kstotal));
-
-	// Form the string we will send over the network
-	decl String:buffer[512];
-	Format(buffer, 512, "KILL_STREAK_TOTAL##PlayerName##%s##KillStreakTotal##%s", cName, kstotal);
-	PrintToServer("[SM] %s has a kill streak of %s || sending [%s] to client", cName, kstotal, buffer);
-
-	// Send
-	SounddataSend(buffer);
-
-public Action:Event_ctfFlagCaptured(Handle:event, const String:name[], bool:dontBroadcast)
-{
-	//decl String:cName[64];
-	decl String:capping_team[64];
-
-	// Get when a flag is captured by a player
-	GetEventString(event, "ctf_flag_captured", flagcaptured, sizeof(flagcaptured))
-
-	// Form the string we will send over the network
-	decl String:buffer[512];
-	Format(buffer, 512, "CTF_FLAG_CAPTURED##CappingTeamName##%s", capping_team);
-	PrintToServer("[SM] %s team captured the flag || sending [%s] to client", capping_team, buffer);
-
-	// Send
-	SounddataSend(buffer);
-}
-
-public Action:Event_PlayerTeleported(Handle:event, const String:name[], bool:dontBroadcast)
-{
-	decl String:cName[64];
-	
-	new userId = GetEventInt(event, "userid");
-	new clientId = GetClientOfUserId(userId);
-	GetClientName(clientId, cName, sizeof(cName));	
-
-	// Get player that was teleported
-	GetEventString(event, "player_teleported", pteleported, sizeof(pteleported))
-
-	// Form the string we will send over the network
-	decl String:buffer[512];
-	Format(buffer, 512, "PLAYER_TELEPORTED##PlayerName##%s", cName);
-	PrintToServer("[SM] %s was teleported || sending [%s] to client", cName, buffer);
-
-	// Send
-	SounddataSend(buffer);
 }
 
 Native_ConstructMessage(Handle:plugin, numParams)
