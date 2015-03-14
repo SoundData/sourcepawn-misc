@@ -4,9 +4,9 @@
  * @param msg	Message to print.
  * @noreturn
  */
-native SounddataSend(const String:message[]);
+native TellClientAbout(const String:message[]);
 
-native ConstructMessage(String:messageBuf[], const size, const String:eventType[], rest:...);
+//native ConstructMessage(Handle:event, String:messageBuf[], const size, const String:eventType[], rest:...);
 
 
 enum ParamTypes {
@@ -14,5 +14,7 @@ enum ParamTypes {
 	VictimName = 2,
 	WeaponName = 3,
 	IsRocketJumping = 4,
+	AssisterName = 5,
+	KillStreamTotal = 6,
 	//... etc
 }
