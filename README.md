@@ -10,13 +10,22 @@ Start ssh-agent by running `eval "$(ssh-agent -s)"` followed by `ssh-add /path/t
 
 Updating the server
 -------------------
-`cd` to the git directory containing the files:
+#`cd` to the git directory containing the files:#
+
 `cd ~/sourcemod-misc-stuff/sourcepawn-misc`
-Update the repo:
+
+#Update the repo:#
+
 `git pull`
-Rebuild the plugins:
+
+#Rebuild the plugins:#
+
 `cd $SCRIPTINGDIR`
+
 `./build_plugin.sh`
-Restart the server:
+
+#Restart the server:#
+
 `cd $TF2SERVERDIR`
+
 `./start_server.sh`
