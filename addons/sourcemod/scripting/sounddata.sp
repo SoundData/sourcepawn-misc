@@ -23,15 +23,15 @@ public OnPluginStart()
     HookEvent("object_destroyed", Event_ObjectDestroyed, EventHookMode_Pre);
     HookEvent("ctf_flag_captured", Event_ctfFlagCaptured, EventHookMode_Pre);
     HookEvent("player_teleported", Event_PlayerTeleported, EventHookMode_Pre);
-    HookEvent("player_ignited", Event_PlayerIgnited, EventHookMode_Pre);
 
     // Class specific events
-    HookEvent("sticky_jump", Event_StickyJump, EventHookMode_Pre);
-    HookEvent("rocket_jump", Event_RocketJump, EventHookMode_Pre);
-    HookEvent("player_extinguished", Event_PlayerExtinguished, EventHookMode_Pre);
-    HookEvent("air_dash", Event_AirDash, EventHookMode_Pre);
-    HookEvent("arrow_impact", Event_ArrowImpact, EventHookMode_Pre);
-    HookEvent("spy_pda_reset", Event_SpyPDAReset, EventHookMode_Pre);
+    HookEvent("sticky_jump", Event_StickyJump, EventHookMode_Pre); //Demoman Class
+    HookEvent("rocket_jump", Event_RocketJump, EventHookMode_Pre); //Soldier Class
+    HookEvent("player_ignited", Event_PlayerIgnited, EventHookMode_Pre); //Pyro Class
+    HookEvent("player_extinguished", Event_PlayerExtinguished, EventHookMode_Pre); //Medic Class
+    HookEvent("air_dash", Event_AirDash, EventHookMode_Pre); //Scout Class
+    HookEvent("arrow_impact", Event_ArrowImpact, EventHookMode_Pre); //Sniper/Medic Class's 
+    HookEvent("spy_pda_reset", Event_SpyPDAReset, EventHookMode_Pre); //Spy Class
 
 	PrintToServer("Successfully loaded Broadcast Plugin");
 	
@@ -189,7 +189,12 @@ public Action:Event_ObjectDestroyed(Handle:event, const String:name[], bool:dont
 //short   objecttype  type of object destroyed
 //short   index   index of the object destroyed
 //bool    was_building    object was being built when it died 
-    
+    decl String:playerName[64];
+    GetPlayerName(event, playerName, 64);
+
+    decl String:buffer[128];
+    Format(buffer, 128, "OBJECT_DESTROYED##PlayerName##%s", playerName);
+    TellClientAbout(buffer);
 }
 
 public Action:Event_ctfFlagCaptured(Handle:event, const String:name[], bool:dontBroadcast)
@@ -199,7 +204,12 @@ public Action:Event_ctfFlagCaptured(Handle:event, const String:name[], bool:dont
 //Structure:  
 //short   capping_team    
 //short   capping_team_score 
-    
+    decl String:playerName[64];
+    GetPlayerName(event, playerName, 64);
+
+    decl String:buffer[128];
+    Format(buffer, 128, "CTF_FLAG_CAPTURED!##PlayerName##%s", playerName);
+    TellClientAbout(buffer);
 }
 
 public Action:Event_PlayerTeleported(Handle:event, const String:name[], bool:dontBroadcast)
@@ -210,7 +220,12 @@ public Action:Event_PlayerTeleported(Handle:event, const String:name[], bool:don
 //short   userid  userid of the player
 //short   builderid   userid of the player who built the teleporter
 //float   dist    distance the player was teleported 
-    
+   decl String:playerName[64];
+   GetPlayerName(event, playerName, 64);
+
+   decl String:buffer[128];
+   Format(buffer, 128, "Player_Teleported!##PlayerName##%s", playerName);
+   TellClientAbout(buffer); 
 }
 
 public Action:Event_PlayerIgnited(Handle:event, const String:name[], bool:dontBroadcast)
@@ -221,7 +236,11 @@ public Action:Event_PlayerIgnited(Handle:event, const String:name[], bool:dontBr
 //byte    pyro_entindex   entindex of the pyro who ignited the victim
 //byte    victim_entindex     entindex of the player ignited by the pyro
 //byte    weaponid    weaponid of the weapon used 
-    
+    decl String:playerName[64];
+    GetPlayerName(event, playerName, 64);
+
+    decl String:buffer[128];
+    Format(buffer, 128, "Pyro_Ignited:##PlayerName##%s", playerName);
 }
 
 public Action:Event_StickyJump(Handle:event, const String:name[], bool:dontBroadcast)
@@ -230,7 +249,11 @@ public Action:Event_StickyJump(Handle:event, const String:name[], bool:dontBroad
 //Structure:  
 //short   userid  
 //bool    playsound 
-    
+    decl String:playerName[64];
+    GetPlayerName(event, playerName, 64);
+
+    decl String:buffer[128];
+    Format(buffer, 128, "Demoman_sticky_jumped:##PlayerName##%s", playerName);
 }
 
 public Action:Event_RocketJump(Handle:event, const String:name[], bool:dontBroadcast)
@@ -238,8 +261,12 @@ public Action:Event_RocketJump(Handle:event, const String:name[], bool:dontBroad
 //Name:   rocket_jump
 //Structure:  
 //short   userid  
-//bool    playsound   
-    
+//bool    playsound  
+	decl String:playerName[64];
+	GetPlayerName(event, playerName, 64);
+
+	decl String:buffer[128];
+	Format(buffer, 128, "Soldier_sticky_jumped:##PlayerName##%s", playerName);
 }
 
 public Action:Event_PlayerExtinguished(Handle:event, const String:name[], bool:dontBroadcast)
@@ -249,7 +276,11 @@ public Action:Event_PlayerExtinguished(Handle:event, const String:name[], bool:d
 //Structure:  
 //byte    victim  entindex of the player that was extinguished
 //byte    healer  entindex of the player who did the extinguishing 
-    
+    decl String:playerName[64];
+    GetPlayerName(event, playerName, 64);
+
+    decl String:buffer[128];
+    Format(buffer, 128, "Medic_extinguished_player:##PlayerName##%s", playerName);
 }
 
 public Action:Event_AirDash(Handle:event, const String:name[], bool:dontBroadcast)
@@ -258,7 +289,11 @@ public Action:Event_AirDash(Handle:event, const String:name[], bool:dontBroadcas
 //Name:   air_dash
 //Structure:  
 //byte    player 
-    
+    decl String:playerName[64];
+    GetPlayerName(event, playername, 64);
+
+    decl String:buffer[128];
+    Format(buffer, 128, "Scout_air_dashed:##PlayerName##%s", playerName);
 }
 
 public Action:Event_ArrowImpact(Handle:event, const String:name[], bool:dontBroadcast)
@@ -277,7 +312,11 @@ public Action:Event_ArrowImpact(Handle:event, const String:name[], bool:dontBroa
 //float   boneAnglesZ     
 //short   projectileType  
 //bool    isCrit 
-    
+    decl String:playerName[64];
+    GetPlayerName(event, playerName, 64);
+
+    decl String:buffer[128];
+    Format(buffer, 128, "Arrow_impact:##PlayerName%s", playerName);
 }
 
 public Action:Event_SpyPDAReset(Handle:event, const String:name[], bool:dontBroadcast)
@@ -286,9 +325,12 @@ public Action:Event_SpyPDAReset(Handle:event, const String:name[], bool:dontBroa
 //Structure:  
 //
 // AlliedMods wiki didn't have info on this one... Maybe just print out SPY_PDA_RESET##name... idk
-    
-}
+    decl String:playerName[64];
+    GetPlayerName(event, playerName, 64);
 
+    decl String:buffer[128];
+    Format(buffer 128, "Spy_reset_PDA:##PlayerName%s", playerName);
+}
 
 // Write the "attacker" field from the event into the buffer string
 // Use this form if the event uses "user IDs" in the event keys instead of "entindex"es
