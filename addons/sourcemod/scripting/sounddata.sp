@@ -241,6 +241,7 @@ public Action:Event_PlayerIgnited(Handle:event, const String:name[], bool:dontBr
 
     decl String:buffer[128];
     Format(buffer, 128, "Pyro_Ignited:##PlayerName##%s", playerName);
+    TellClientAbout(buffer); 
 }
 
 public Action:Event_StickyJump(Handle:event, const String:name[], bool:dontBroadcast)
@@ -254,6 +255,7 @@ public Action:Event_StickyJump(Handle:event, const String:name[], bool:dontBroad
 
     decl String:buffer[128];
     Format(buffer, 128, "Demoman_sticky_jumped:##PlayerName##%s", playerName);
+    TellClientAbout(buffer); 
 }
 
 public Action:Event_RocketJump(Handle:event, const String:name[], bool:dontBroadcast)
@@ -267,6 +269,7 @@ public Action:Event_RocketJump(Handle:event, const String:name[], bool:dontBroad
 
 	decl String:buffer[128];
 	Format(buffer, 128, "Soldier_sticky_jumped:##PlayerName##%s", playerName);
+	TellClientAbout(buffer); 
 }
 
 public Action:Event_PlayerExtinguished(Handle:event, const String:name[], bool:dontBroadcast)
@@ -281,6 +284,7 @@ public Action:Event_PlayerExtinguished(Handle:event, const String:name[], bool:d
 
     decl String:buffer[128];
     Format(buffer, 128, "Medic_extinguished_player:##PlayerName##%s", playerName);
+    TellClientAbout(buffer); 
 }
 
 public Action:Event_AirDash(Handle:event, const String:name[], bool:dontBroadcast)
@@ -294,6 +298,7 @@ public Action:Event_AirDash(Handle:event, const String:name[], bool:dontBroadcas
 
     decl String:buffer[128];
     Format(buffer, 128, "Scout_air_dashed:##PlayerName##%s", playerName);
+    TellClientAbout(buffer); 
 }
 
 public Action:Event_ArrowImpact(Handle:event, const String:name[], bool:dontBroadcast)
@@ -317,6 +322,7 @@ public Action:Event_ArrowImpact(Handle:event, const String:name[], bool:dontBroa
 
     decl String:buffer[128];
     Format(buffer, 128, "Arrow_impact:##PlayerName%s", playerName);
+    TellClientAbout(buffer); 
 }
 
 public Action:Event_SpyPDAReset(Handle:event, const String:name[], bool:dontBroadcast)
@@ -330,6 +336,7 @@ public Action:Event_SpyPDAReset(Handle:event, const String:name[], bool:dontBroa
 
     decl String:buffer[128];
     Format(buffer 128, "Spy_reset_PDA:##PlayerName%s", playerName);
+    TellClientAbout(buffer); 
 }
 
 // Write the "attacker" field from the event into the buffer string
