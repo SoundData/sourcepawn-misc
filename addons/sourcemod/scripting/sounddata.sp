@@ -45,6 +45,9 @@ public bool:OnClientConnect(client, String:rejectmsg[], maxlen)
 	decl String:buffer[512];
 	decl String:cName[64];
 	GetClientName(client, cName, 64);
+
+    // TODO: Test if "cName" contains the substring "##"
+    // If it does, replace it with something else that doesn't break our on-wire protocol
 	
 	// Form the string we will send over the network
 	Format(buffer, 512, "CLIENT_CONNECT##PlayerName##%s", cName);
@@ -264,8 +267,12 @@ public Action:Event_RocketJump(Handle:event, const String:name[], bool:dontBroad
 //Structure:  
 //short   userid  
 //bool    playsound  
+    PrintToServer("Rocket jump occurred");
+
 	decl String:playerName[64];
-	GetPlayerName(event, playerName, 64);
+	GetPlayerName_NoEntindex(event, playerName, 64);
+
+    PrintToServer(playerName);
 
 	decl String:buffer[128];
 	Format(buffer, 128, "Soldier_sticky_jumped:##PlayerName##%s", playerName);
@@ -293,8 +300,14 @@ public Action:Event_AirDash(Handle:event, const String:name[], bool:dontBroadcas
 //Name:   air_dash
 //Structure:  
 //byte    player 
+
+    PrintToServer("Scout air dash event occurred");
+
     decl String:playerName[64];
-    GetPlayerName(event, playername, 64);
+    //GetPlayerName(event, playerName, 64);
+    GetPlayerName_NoEntindex(event, playerName, 64);
+
+    PrintToServer(playerName);
 
     decl String:buffer[128];
     Format(buffer, 128, "Scout_air_dashed:##PlayerName##%s", playerName);
@@ -321,7 +334,7 @@ public Action:Event_ArrowImpact(Handle:event, const String:name[], bool:dontBroa
     GetPlayerName(event, playerName, 64);
 
     decl String:buffer[128];
-    Format(buffer, 128, "Arrow_impact:##PlayerName%s", playerName);
+    Format(buffer, 128, "Arrow_impact:##PlayerName##%s", playerName);
     TellClientAbout(buffer); 
 }
 
@@ -335,7 +348,7 @@ public Action:Event_SpyPDAReset(Handle:event, const String:name[], bool:dontBroa
     GetPlayerName(event, playerName, 64);
 
     decl String:buffer[128];
-    Format(buffer 128, "Spy_reset_PDA:##PlayerName%s", playerName);
+    Format(buffer, 128, "Spy_reset_PDA:##PlayerName##%s", playerName);
     TellClientAbout(buffer); 
 }
 
@@ -363,6 +376,15 @@ GetVictimName(Handle:event, String:buffer[], bufferSize)
 GetAssisterName(Handle:event, String:buffer[], bufferSize)
 {
 	new assisterUserId = GetEventInt(event, "assister");
+	new assisterClientId = GetClientOfUserId(assisterUserId);
+	GetClientName(assisterClientId, buffer, bufferSize);
+}
+
+// Write the "player" string to the buffer
+// Uses userID's, not entindex
+GetPlayerName_NoEntindex(Handle:event, String:buffer[], bufferSize)
+{
+	new assisterUserId = GetEventInt(event, "player");
 	new assisterClientId = GetClientOfUserId(assisterUserId);
 	GetClientName(assisterClientId, buffer, bufferSize);
 }
