@@ -4,11 +4,12 @@
 #include <events>
 #include <sounddata_send>
 #include <functions>
+#include <tf2_stocks>
 
 public Plugin:myinfo =
 {
   name = "Broadcast Plugin",
-  author = "mproetsch",
+  author = "Sounddata",
   description = "Broadcast messages over network to Sounddata Client",
   version = "0.1.0.0",
   url = "https://github.com/orgs/SoundData/"
@@ -18,6 +19,9 @@ public OnPluginStart()
 {
     // Global events for all classes
 	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
+    HookEvent("player_changeclass", Event_PlayerChangeclass, EventHookMode_Pre);
+    HookEvent("player_team", Event_PlayerTeam, EventHookMode_Pre);
+    HookEvent("player_hurt", Event_PlayerHurt, EventHookMode_Pre);
 	HookEvent("controlpoint_starttouch", Event_Controlpoint_Starttouch, EventHookMode_Pre);
 	HookEvent("controlpoint_endtouch", Event_Controlpoint_Endtouch, EventHookMode_Pre);
     HookEvent("object_destroyed", Event_ObjectDestroyed, EventHookMode_Pre);
@@ -29,9 +33,10 @@ public OnPluginStart()
     HookEvent("rocket_jump", Event_RocketJump, EventHookMode_Pre); //Soldier Class
     HookEvent("player_ignited", Event_PlayerIgnited, EventHookMode_Pre); //Pyro Class
     HookEvent("player_extinguished", Event_PlayerExtinguished, EventHookMode_Pre); //Medic Class
-    HookEvent("air_dash", Event_AirDash, EventHookMode_Pre); //Scout Class
+    // So Sourcemod doesn't atually fire this event...
+    //HookEvent("air_dash", Event_AirDash, EventHookMode_Pre); //Scout Class
     HookEvent("arrow_impact", Event_ArrowImpact, EventHookMode_Pre); //Sniper/Medic Class's 
-    HookEvent("spy_pda_reset", Event_SpyPDAReset, EventHookMode_Pre); //Spy Class
+    //HookEvent("spy_pda_reset", Event_SpyPDAReset, EventHookMode_Pre); //Spy Class
 
 	PrintToServer("Successfully loaded Broadcast Plugin");
 	
@@ -149,6 +154,100 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 	
 }
 
+public Action:Event_PlayerChangeclass(Handle:event, const String:name[], bool:dontBroadcast)
+{
+//Note: When a player changes their class
+//Name:   player_changeclass
+//Structure:  
+//short   userid  user ID who changed class
+//short   class   class that they changed to 
+    decl String:playerName[64];
+    decl String:className[64];
+    GetPlayerName_FromUserid(event, playerName, 64);
+    new TFClassType:classID = GetEventInt(event, "class");
+
+    if (classID == TFClass_Scout) {
+        Format(className, 64, "Scout");
+    } else if (classID == TFClass_Sniper) {
+        Format(className, 64, "Sniper");
+    }  else if (classID == TFClass_Soldier) {
+        Format(className, 64, "Soldier");
+    }  else if (classID == TFClass_DemoMan) {
+        Format(className, 64, "DemoMan");
+    }  else if (classID == TFClass_Medic) {
+        Format(className, 64, "Medic");
+    }  else if (classID == TFClass_Heavy) {
+        Format(className, 64, "Heavy");
+    }  else if (classID == TFClass_Pyro) {
+        Format(className, 64, "Pyro");
+    }  else if (classID == TFClass_Spy) {
+        Format(className, 64, "Spy");
+    }  else if (classID == TFClass_Engineer) {
+        Format(className, 64, "Engineer");
+    } 
+
+    decl String:buffer[512];
+    Format(buffer, 512, "PLAYER_CHANGECLASS##PlayerName##%s##PlayerClass##%s", playerName, className);
+    TellClientAbout(buffer);
+
+}
+
+
+public Action:Event_PlayerTeam(Handle:event, const String:name[], bool:dontBroadcast)
+{
+//Note: A player changed his team
+//Name:   player_team
+//Structure:  
+//short   userid  user ID on the server
+//byte    team    team id
+//byte    oldteam     old team id
+//bool    disconnect  team change because player disconnects
+//bool    autoteam    true if the player was auto assigned to the team (OB only)
+//bool    silent  if true wont print the team join messages (OB only)
+//string  name    player's name (OB only) 
+    
+    decl String:playerName[64];
+    decl String:teamName[64];
+
+    GetPlayerName_FromUserid(event, playerName, 64);
+    GetTeamName(GetEventInt(event, "team"), teamName, 64);
+    new bool:becausePlayerDisconnected = GetEventBool(event, "disconnect");
+
+    decl String:buffer[512];
+    Format(buffer, 512, "PLAYER_CHANGE_TEAM##PlayerName##%s##TeamName##%s##BecauseDisconnect##%d", playerName, teamName, becausePlayerDisconnected);
+    TellClientAbout(buffer);
+
+}
+
+public Action:Event_PlayerHurt(Handle:event, const String:name[], bool:dontBroadcast)
+{
+//player_hurt
+//Name:   player_hurt
+//Structure:  
+//short   userid  
+//short   health  
+//short   attacker    
+//short   damageamount    
+//short   custom  
+//bool    showdisguisedcrit   if our attribute specifically crits disguised enemies we need to show it on the client
+//bool    crit    
+//bool    minicrit    
+//bool    allseecrit  
+//short   weaponid    
+//short   bonuseffect 
+    
+    decl String:playerName[64];
+    decl String:attackerName[64];
+
+    GetVictimName(event, playerName, 64);
+    GetAttackerName(event, attackerName, 64);
+    new health = GetEventInt(event, "health");
+
+    decl String:buffer[512];
+    Format(buffer, 512, "PLAYER_HURT##VictimName##%s##AttackerName##%s##VictimHealth##%d", playerName, attackerName, health);
+    TellClientAbout(buffer);
+}
+
 public Action:Event_Controlpoint_Starttouch(Handle:event, const String:name[], bool:dontBroadcast)
 {
 //Note: When a player enters a capture point zone
@@ -157,7 +256,7 @@ public Action:Event_Controlpoint_Starttouch(Handle:event, const String:name[], b
 //short   player  entindex of the player
 //short   area    index of the control point area 
 	decl String:playerName[64];
-	GetPlayerName(event, playerName, 64);
+	GetPlayerName_FromEntindex(event, playerName, 64);
 	
 	decl String:buffer[128];
 	Format(buffer, 128, "CONTROLPOINT_STARTTOUCH##PlayerName##%s", playerName);
@@ -172,7 +271,7 @@ public Action:Event_Controlpoint_Endtouch(Handle:event, const String:name[], boo
 //short   player  entindex of the player
 //short   area    index of the control point area 
 	decl String:playerName[64];
-	GetPlayerName(event, playerName, 64);
+	GetPlayerName_FromEntindex(event, playerName, 64);
 
 	decl String:buffer[128];
 	Format(buffer, 128, "CONTROLPOINT_ENDTOUCH##PlayerName##%s", playerName);
@@ -193,7 +292,7 @@ public Action:Event_ObjectDestroyed(Handle:event, const String:name[], bool:dont
 //short   index   index of the object destroyed
 //bool    was_building    object was being built when it died 
     decl String:playerName[64];
-    GetPlayerName(event, playerName, 64);
+    GetPlayerName_FromUserid(event, playerName, 64);
 
     decl String:buffer[128];
     Format(buffer, 128, "OBJECT_DESTROYED##PlayerName##%s", playerName);
@@ -207,11 +306,11 @@ public Action:Event_ctfFlagCaptured(Handle:event, const String:name[], bool:dont
 //Structure:  
 //short   capping_team    
 //short   capping_team_score 
-    decl String:playerName[64];
-    GetPlayerName(event, playerName, 64);
+    decl String:teamName[64];
+    GetTeamName(GetEventInt(event, "capping_team"), teamName, 64);
 
     decl String:buffer[128];
-    Format(buffer, 128, "CTF_FLAG_CAPTURED!##PlayerName##%s", playerName);
+    Format(buffer, 128, "CTF_FLAG_CAPTURED##TeamName##%s", teamName);
     TellClientAbout(buffer);
 }
 
@@ -224,10 +323,10 @@ public Action:Event_PlayerTeleported(Handle:event, const String:name[], bool:don
 //short   builderid   userid of the player who built the teleporter
 //float   dist    distance the player was teleported 
    decl String:playerName[64];
-   GetPlayerName(event, playerName, 64);
+   GetPlayerName_FromUserid(event, playerName, 64);
 
    decl String:buffer[128];
-   Format(buffer, 128, "Player_Teleported!##PlayerName##%s", playerName);
+   Format(buffer, 128, "PLAYER_TELEPORTED##PlayerName##%s", playerName);
    TellClientAbout(buffer); 
 }
 
@@ -240,10 +339,12 @@ public Action:Event_PlayerIgnited(Handle:event, const String:name[], bool:dontBr
 //byte    victim_entindex     entindex of the player ignited by the pyro
 //byte    weaponid    weaponid of the weapon used 
     decl String:playerName[64];
-    GetPlayerName(event, playerName, 64);
+    decl String:victimName[64];
+    GetPyroName_FromEntindex(event, playerName, 64);
+    GetPyroVictimName_FromEntindex(event, victimName, 64);
 
     decl String:buffer[128];
-    Format(buffer, 128, "Pyro_Ignited:##PlayerName##%s", playerName);
+    Format(buffer, 128, "PYRO_IGNITED##PlayerName##%s##VictimName##%s", playerName, victimName);
     TellClientAbout(buffer); 
 }
 
@@ -254,10 +355,10 @@ public Action:Event_StickyJump(Handle:event, const String:name[], bool:dontBroad
 //short   userid  
 //bool    playsound 
     decl String:playerName[64];
-    GetPlayerName(event, playerName, 64);
+    GetPlayerName_FromUserid(event, playerName, 64);
 
     decl String:buffer[128];
-    Format(buffer, 128, "Demoman_sticky_jumped:##PlayerName##%s", playerName);
+    Format(buffer, 128, "DEMOMAN_STICKY_JUMP##PlayerName##%s", playerName);
     TellClientAbout(buffer); 
 }
 
@@ -270,12 +371,12 @@ public Action:Event_RocketJump(Handle:event, const String:name[], bool:dontBroad
     PrintToServer("Rocket jump occurred");
 
 	decl String:playerName[64];
-	GetPlayerName_NoEntindex(event, playerName, 64);
+    GetPlayerName_FromUserid(event, playerName, 64);
 
     PrintToServer(playerName);
 
 	decl String:buffer[128];
-	Format(buffer, 128, "Soldier_sticky_jumped:##PlayerName##%s", playerName);
+	Format(buffer, 128, "SOLDIER_ROCKET_JUMP##PlayerName##%s", playerName);
 	TellClientAbout(buffer); 
 }
 
@@ -287,32 +388,34 @@ public Action:Event_PlayerExtinguished(Handle:event, const String:name[], bool:d
 //byte    victim  entindex of the player that was extinguished
 //byte    healer  entindex of the player who did the extinguishing 
     decl String:playerName[64];
-    GetPlayerName(event, playerName, 64);
+    decl String:healerName[64];
+    GetVictimName_FromEntindex(event, playerName, 64);
+    GetHealerName_FromEntindex(event, healerName, 64);
 
     decl String:buffer[128];
-    Format(buffer, 128, "Medic_extinguished_player:##PlayerName##%s", playerName);
+    Format(buffer, 128, "MEDIC_EXTINGUISHED_PLAYER##PlayerName##%s##HealerName##%s", playerName, healerName);
     TellClientAbout(buffer); 
 }
 
-public Action:Event_AirDash(Handle:event, const String:name[], bool:dontBroadcast)
-{
-//Note: Called when a scout Performs Double Jump
-//Name:   air_dash
-//Structure:  
-//byte    player 
-
-    PrintToServer("Scout air dash event occurred");
-
-    decl String:playerName[64];
-    //GetPlayerName(event, playerName, 64);
-    GetPlayerName_NoEntindex(event, playerName, 64);
-
-    PrintToServer(playerName);
-
-    decl String:buffer[128];
-    Format(buffer, 128, "Scout_air_dashed:##PlayerName##%s", playerName);
-    TellClientAbout(buffer); 
-}
+//public Action:Event_AirDash(Handle:event, const String:name[], bool:dontBroadcast)
+//{
+////Note: Called when a scout Performs Double Jump
+////Name:   air_dash
+////Structure:  
+////byte    player 
+//
+    //PrintToServer("Scout air dash event occurred");
+//
+    //decl String:playerName[64];
+    ////GetPlayerName(event, playerName, 64);
+    //GetPlayerName_NoEntindex(event, playerName, 64);
+//
+    //PrintToServer(playerName);
+//
+    //decl String:buffer[128];
+    //Format(buffer, 128, "SCOUT_AIR_DASHED##PlayerName##%s", playerName);
+    //TellClientAbout(buffer); 
+//}
 
 public Action:Event_ArrowImpact(Handle:event, const String:name[], bool:dontBroadcast)
 {
@@ -330,27 +433,29 @@ public Action:Event_ArrowImpact(Handle:event, const String:name[], bool:dontBroa
 //float   boneAnglesZ     
 //short   projectileType  
 //bool    isCrit 
-    decl String:playerName[64];
-    GetPlayerName(event, playerName, 64);
+    decl String:shooterName[64];
+    decl String:victimName[64];
+    GetShooterName_FromEntindex(event, shooterName, 64);
+    GetAttachedEntityName_FromEntindex(event, victimName, 64);
 
     decl String:buffer[128];
-    Format(buffer, 128, "Arrow_impact:##PlayerName##%s", playerName);
+    Format(buffer, 128, "ARROW_IMPACT##ShooterName##%s##VictimName##%s", shooterName, victimName);
     TellClientAbout(buffer); 
 }
 
-public Action:Event_SpyPDAReset(Handle:event, const String:name[], bool:dontBroadcast)
-{
-//Name:   spy_pda_reset
-//Structure:  
+//public Action:Event_SpyPDAReset(Handle:event, const String:name[], bool:dontBroadcast)
+//{
+////Name:   spy_pda_reset
+////Structure:  
+////
+//// AlliedMods wiki didn't have info on this one... Maybe just print out SPY_PDA_RESET##name... idk
+//    decl String:playerName[64];
+//    GetPlayerName(event, playerName, 64);
 //
-// AlliedMods wiki didn't have info on this one... Maybe just print out SPY_PDA_RESET##name... idk
-    decl String:playerName[64];
-    GetPlayerName(event, playerName, 64);
-
-    decl String:buffer[128];
-    Format(buffer, 128, "Spy_reset_PDA:##PlayerName##%s", playerName);
-    TellClientAbout(buffer); 
-}
+//    decl String:buffer[128];
+//    Format(buffer, 128, "Spy_reset_PDA:##PlayerName##%s", playerName);
+//    TellClientAbout(buffer); 
+//}
 
 // Write the "attacker" field from the event into the buffer string
 // Use this form if the event uses "user IDs" in the event keys instead of "entindex"es
@@ -380,13 +485,13 @@ GetAssisterName(Handle:event, String:buffer[], bufferSize)
 	GetClientName(assisterClientId, buffer, bufferSize);
 }
 
-// Write the "player" string to the buffer
+// Write the "userid" string to the buffer
 // Uses userID's, not entindex
-GetPlayerName_NoEntindex(Handle:event, String:buffer[], bufferSize)
+GetPlayerName_FromUserid(Handle:event, String:buffer[], bufferSize)
 {
-	new assisterUserId = GetEventInt(event, "player");
-	new assisterClientId = GetClientOfUserId(assisterUserId);
-	GetClientName(assisterClientId, buffer, bufferSize);
+	new userId = GetEventInt(event, "userid");
+	new clientId = GetClientOfUserId(userId);
+	GetClientName(clientId, buffer, bufferSize);
 }
 
 // Returns a cell getting kill streak total of the event
@@ -403,8 +508,50 @@ bool:GetRocketJump(Handle:event)
 
 // Gets player name from the entity index specified in the event
 // Use this function if the event uses entindexes
-GetPlayerName(Handle:event, String:buffer[], bufferSize)
+GetPlayerName_FromEntindex(Handle:event, String:buffer[], bufferSize)
 {
 	new playerEntIdx = GetEventInt(event, "player");
+	GetClientName(playerEntIdx, buffer, bufferSize);
+}
+
+// Gets player name from pyro_entindex
+GetPyroName_FromEntindex(Handle:event, String:buffer[], bufferSize)
+{
+	new playerEntIdx = GetEventInt(event, "pyro_entindex");
+	GetClientName(playerEntIdx, buffer, bufferSize);
+}
+
+// Gets player name from victim_entindex
+GetPyroVictimName_FromEntindex(Handle:event, String:buffer[], bufferSize)
+{
+	new playerEntIdx = GetEventInt(event, "victim_entindex");
+	GetClientName(playerEntIdx, buffer, bufferSize);
+}
+
+// Gets player name from victim entindex
+GetVictimName_FromEntindex(Handle:event, String:buffer[], bufferSize)
+{
+	new playerEntIdx = GetEventInt(event, "victim");
+	GetClientName(playerEntIdx, buffer, bufferSize);
+}
+
+// Gets player name from healer entindex
+GetHealerName_FromEntindex(Handle:event, String:buffer[], bufferSize)
+{
+	new playerEntIdx = GetEventInt(event, "healer");
+	GetClientName(playerEntIdx, buffer, bufferSize);
+}
+
+// Gets player name from shooter entindex
+GetShooterName_FromEntindex(Handle:event, String:buffer[], bufferSize)
+{
+	new playerEntIdx = GetEventInt(event, "shooter");
+	GetClientName(playerEntIdx, buffer, bufferSize);
+}
+
+// Gets player name from attachedEntity entindex
+GetAttachedEntityName_FromEntindex(Handle:event, String:buffer[], bufferSize)
+{
+	new playerEntIdx = GetEventInt(event, "attachedEntity");
 	GetClientName(playerEntIdx, buffer, bufferSize);
 }
